@@ -184,6 +184,19 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
         launchBusy { loadActivities(p) }
     }
 
+    /** Preselect the project and activity of the most recent entry, the one "start again" would use. */
+    fun selectLastUsed() {
+        val s = _ui.value
+        s.entries.maxByOrNull { it.beginMillis }?.let {
+            prefs.lastProjectId = it.project.id
+            prefs.lastActivityId = it.activity.id
+        }
+        val project = s.projects.firstOrNull { it.id == prefs.lastProjectId } ?: return
+        if (project.id == s.selectedProject?.id && s.selectedActivity?.id == prefs.lastActivityId) return
+        _ui.update { it.copy(selectedProject = project, activities = emptyList(), selectedActivity = null) }
+        launchBusy { loadActivities(project) }
+    }
+
     fun selectActivity(a: Activity) = _ui.update { it.copy(selectedActivity = a) }
 
     fun setDescription(text: String) = _ui.update { it.copy(description = text) }
