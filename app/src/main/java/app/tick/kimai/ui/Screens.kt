@@ -37,7 +37,6 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -50,7 +49,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -67,6 +65,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
@@ -340,8 +339,8 @@ private fun HomeScreen(
             TopAppBar(
                 title = { Text("Tick") },
                 actions = {
-                    IconButton(onClick = { vm.refresh() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                    IconButton(onClick = { adding = true }) {
+                        Icon(Icons.Default.Add, contentDescription = "Add past entry")
                     }
                     Box {
                         IconButton(onClick = { menuOpen = true }) {
@@ -404,15 +403,10 @@ private fun HomeScreen(
                 },
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { adding = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add entry")
-            }
-        },
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            if (ui.busy) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            if (ui.busy && !ui.refreshing) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             if (ui.pending > 0) {
                 Text(
                     if (ui.pending == 1) "1 change waiting to sync" else "${ui.pending} changes waiting to sync",
@@ -429,61 +423,67 @@ private fun HomeScreen(
             val finished = ui.entries.filter { !it.isRunning }
             val byDay = finished.groupBy { Fmt.localDate(it.beginMillis) }
 
-            LazyColumn(
+            PullToRefreshBox(
+                isRefreshing = ui.refreshing,
+                onRefresh = { vm.refresh() },
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                item(key = "timer") { TimerCard(vm, ui, onEdit = { editing = it }) }
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    item(key = "timer") { TimerCard(vm, ui, onEdit = { editing = it }) }
 
-                ui.week?.let { week ->
-                    item(key = "week") {
-                        WeekSummary(
-                            week = week,
-                            entries = ui.entries,
-                            timer = ui.timer.takeIf { ui.weekOffset == 0 },
-                            offset = ui.weekOffset,
-                            start = ui.weekStart,
-                            payRateOverride = ui.payRateOverride,
-                            payTaxPercent = ui.payTaxPercent,
-                            onShow = { vm.showWeek(it) },
-                        )
-                    }
-                }
-
-                byDay.forEach { (day, list) ->
-                    item(key = "day-$day") {
-                        val running = ui.running.takeIf { ui.weekOffset == 0 }
-                        val runningSecs =
-                            if (running != null && Fmt.localDate(running.beginMillis) == day) {
-                                ((System.currentTimeMillis() - running.beginMillis) / 1000).coerceAtLeast(0)
-                            } else {
-                                0L
-                            }
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(top = 12.dp, start = 4.dp, end = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Text(
-                                Fmt.dayLabel(day),
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                            Text(
-                                Fmt.hoursMinutes(list.sumOf { it.seconds } + runningSecs),
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ui.week?.let { week ->
+                        item(key = "week") {
+                            WeekSummary(
+                                week = week,
+                                entries = ui.entries,
+                                timer = ui.timer.takeIf { ui.weekOffset == 0 },
+                                offset = ui.weekOffset,
+                                start = ui.weekStart,
+                                payRateOverride = ui.payRateOverride,
+                                payTaxPercent = ui.payTaxPercent,
+                                onShow = { vm.showWeek(it) },
                             )
                         }
                     }
-                    items(list, key = { it.id }) { entry ->
-                        EntryRow(
-                            entry = entry,
-                            mode = ui.timeMode,
-                            onRestart = { vm.restart(entry) },
-                            onEdit = { editing = entry },
-                            onDelete = { deleting = entry },
-                        )
+
+                    byDay.forEach { (day, list) ->
+                        item(key = "day-$day") {
+                            val running = ui.running.takeIf { ui.weekOffset == 0 }
+                            val runningSecs =
+                                if (running != null && Fmt.localDate(running.beginMillis) == day) {
+                                    ((System.currentTimeMillis() - running.beginMillis) / 1000).coerceAtLeast(0)
+                                } else {
+                                    0L
+                                }
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Text(
+                                    Fmt.dayLabel(day),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                                Text(
+                                    Fmt.hoursMinutes(list.sumOf { it.seconds } + runningSecs),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                        items(list, key = { it.id }) { entry ->
+                            EntryRow(
+                                entry = entry,
+                                mode = ui.timeMode,
+                                onRestart = { vm.restart(entry) },
+                                onEdit = { editing = entry },
+                                onDelete = { deleting = entry },
+                            )
+                        }
                     }
                 }
             }
@@ -740,7 +740,7 @@ private fun WeekSummary(
             val f = DateTimeFormatter.ofPattern("MMM d", Locale.getDefault())
             "${f.format(it)} \u2013 ${f.format(it.plusDays(6))}"
         }
-    Column(modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -769,13 +769,12 @@ private fun WeekSummary(
             } else {
                 Fmt.hoursMinutes(total)
             }
-        Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 4.dp))
+        Text(text, style = MaterialTheme.typography.titleMedium)
         if (week.targetSeconds > 0) {
             val fraction = total.toFloat() / week.targetSeconds
-            Spacer(Modifier.height(6.dp))
             LinearProgressIndicator(
                 progress = { fraction.coerceIn(0f, 1f) },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                modifier = Modifier.fillMaxWidth(),
                 color =
                     when {
                         fraction >= 1f -> MaterialTheme.colorScheme.error
@@ -802,7 +801,6 @@ private fun WeekSummary(
                 payText,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
             )
         }
     }
@@ -837,7 +835,7 @@ private fun TimerCard(
         ) {
             Column(
                 modifier = Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(t.project, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
@@ -852,7 +850,6 @@ private fun TimerCard(
                 Text(
                     Fmt.elapsed((now - t.beginMillis) / 1000),
                     style = MaterialTheme.typography.displayMedium,
-                    modifier = Modifier.padding(vertical = 8.dp),
                 )
                 Text(
                     "Started ${Fmt.clock(context, t.beginMillis, ui.timeMode)}",
@@ -861,7 +858,7 @@ private fun TimerCard(
                 Button(
                     onClick = { vm.stop() },
                     enabled = !ui.busy,
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Icon(Icons.Default.Stop, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
@@ -873,7 +870,7 @@ private fun TimerCard(
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 LaunchedEffect(ui.entries.isNotEmpty(), ui.projects.isNotEmpty()) { vm.selectLastUsed() }
                 ProjectActivityPickers(vm, ui)

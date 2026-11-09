@@ -24,6 +24,7 @@ data class UiState(
     val timer: TimerState,
     val timeMode: Int,
     val busy: Boolean = false,
+    val refreshing: Boolean = false,
     val error: String? = null,
     val entries: List<Entry> = emptyList(),
     val projects: List<Project> = emptyList(),
@@ -68,9 +69,12 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
         )
     val ui: StateFlow<UiState> = _ui.asStateFlow()
 
-    private fun launchBusy(block: suspend () -> Unit) {
+    private fun launchBusy(
+        refreshing: Boolean = false,
+        block: suspend () -> Unit,
+    ) {
         viewModelScope.launch {
-            _ui.update { it.copy(busy = true) }
+            _ui.update { it.copy(busy = true, refreshing = refreshing) }
             try {
                 block()
             } catch (e: CancellationException) {
@@ -78,7 +82,7 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
             } catch (e: Exception) {
                 _ui.update { it.copy(error = describe(e)) }
             } finally {
-                _ui.update { it.copy(busy = false) }
+                _ui.update { it.copy(busy = false, refreshing = false) }
             }
         }
     }
@@ -152,7 +156,7 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
     // Loading
 
     fun refresh() =
-        launchBusy {
+        launchBusy(refreshing = true) {
             if (!prefs.loggedIn) return@launchBusy
             apply(repo.sync().getOrThrow())
             if (_ui.value.projects.isEmpty()) loadProjects()
