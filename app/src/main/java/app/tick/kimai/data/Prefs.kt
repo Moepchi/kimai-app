@@ -50,11 +50,6 @@ class Prefs(context: Context) {
         get() = sp.getFloat("pay_tax_percent", 0f)
         set(v) = sp.edit { putFloat("pay_tax_percent", v) }
 
-    /** When the user profile (week start, contract) was last read from Kimai. */
-    var profileFetchedAt: Long
-        get() = sp.getLong("profile_at", 0L)
-        set(v) = sp.edit { putLong("profile_at", v) }
-
     fun weekTotals(): WeekTotals? =
         sp.getLong("week_done", -1L).takeIf { it >= 0 }?.let { WeekTotals(it, effectiveWeekTarget) }
 

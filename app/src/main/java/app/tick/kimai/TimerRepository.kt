@@ -68,7 +68,6 @@ class TimerRepository(context: Context) {
         prefs.userTimezone = me.timezone.orEmpty()
         prefs.firstWeekday = me.firstWeekday.orEmpty()
         prefs.weekTarget = me.weekTargetSeconds
-        prefs.profileFetchedAt = System.currentTimeMillis()
     }
 
     /**
@@ -76,8 +75,6 @@ class TimerRepository(context: Context) {
      * on the Kimai user's first day of the week. The current week's total is cached for the widget.
      */
     private suspend fun loadWeek(offset: Int): WeekView {
-        val stale = System.currentTimeMillis() - prefs.profileFetchedAt > PROFILE_TTL_MS
-        if (stale) runCatching { saveProfile(api().me()) }
         val zone = userZone()
         val start = LocalDate.now(zone).with(TemporalAdjusters.previousOrSame(firstDay())).plusWeeks(offset.toLong())
         val begin = Fmt.apiLocal(start.atStartOfDay(zone).toInstant().toEpochMilli(), zone)
@@ -118,6 +115,7 @@ class TimerRepository(context: Context) {
                     RecentEntry(it.label, it.seconds, it.beginMillis, it.endMillis ?: it.beginMillis)
                 },
             )
+            if (withWeek) runCatching { saveProfile(api().me()) } // picks up week start changes made in Kimai
             val view = if (withWeek) runCatching { loadWeek(0) }.getOrNull() else null
             refreshSurfaces(state, updateTile)
             result(state, view?.entries ?: recent, view?.totals ?: prefs.weekTotals(), running, view?.start)
@@ -349,7 +347,6 @@ class TimerRepository(context: Context) {
     }
 
     private companion object {
-        const val PROFILE_TTL_MS = 6 * 60 * 60 * 1000L
         const val RECENT_ENTRIES_LIMIT = 8
 
         /** One replay at a time across the app, widget, tile and worker. */
