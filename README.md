@@ -14,7 +14,7 @@ Android client for [Kimai](https://www.kimai.org). Kotlin, Jetpack Compose, Mate
 - Recent entries grouped by day: start again, edit (description, start and end date and time), delete
 - Edit a running entry's description and start time without stopping it
 - Add a past entry directly (project, activity, description, start and end) without starting/stopping a timer
-- Forgot to start? Pick "5 / 15 / 30 min ago" before Start
+- Forgot to start? Pick how many minutes ago before Start (presets editable in the top-right menu, Start presets)
 - Projects and activities are cached, so the pickers work offline
 - Weekly hours with a progress bar toward your target (Kimai contract, or set your own in the top-right menu), per-day totals, and previous weeks via the arrows. The week starts on the day set in your Kimai profile.
 - Estimated weekly pay from Kimai's per-entry rates or your own hourly rate, minus an optional tax percentage (top-right menu, Pay rate & tax)

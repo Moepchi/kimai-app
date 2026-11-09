@@ -275,6 +275,7 @@ private fun HomeScreen(
     var showTimeDialog by remember { mutableStateOf(false) }
     var showTargetDialog by remember { mutableStateOf(false) }
     var showPayDialog by remember { mutableStateOf(false) }
+    var showPresetsDialog by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<Entry?>(null) }
     var deleting by remember { mutableStateOf<Entry?>(null) }
     var adding by remember { mutableStateOf(false) }
@@ -373,6 +374,13 @@ private fun HomeScreen(
                                 onClick = {
                                     menuOpen = false
                                     showPayDialog = true
+                                },
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Start presets") },
+                                onClick = {
+                                    menuOpen = false
+                                    showPresetsDialog = true
                                 },
                             )
                             DropdownMenuItem(
@@ -536,6 +544,17 @@ private fun HomeScreen(
         )
     }
 
+    if (showPresetsDialog) {
+        PresetsDialog(
+            current = ui.startPresets,
+            onDismiss = { showPresetsDialog = false },
+            onSave = {
+                vm.setStartPresets(it)
+                showPresetsDialog = false
+            },
+        )
+    }
+
     if (showTimeDialog) {
         AlertDialog(
             onDismissRequest = { showTimeDialog = false },
@@ -606,6 +625,41 @@ private fun WeekTargetDialog(
         },
         confirmButton = {
             TextButton(onClick = { onSave(parseDecimal(text)) }) { Text("Save") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}
+
+@Composable
+private fun PresetsDialog(
+    current: List<Int>,
+    onDismiss: () -> Unit,
+    onSave: (List<Int>) -> Unit,
+) {
+    var text by remember { mutableStateOf(current.joinToString(", ")) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Start presets") },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                label = { Text("Minutes ago") },
+                supportingText = { Text("Up to 3 numbers, e.g. 5, 15, 30. Empty resets.") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onSave(
+                        text.split(
+                            Regex("\\D+"),
+                        ).mapNotNull { it.toIntOrNull() }.filter { it > 0 }.distinct().sorted().take(3),
+                    )
+                },
+            ) { Text("Save") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
@@ -819,10 +873,10 @@ private fun TimerCard(
                     label = { Text("Description (optional)") },
                     modifier = Modifier.fillMaxWidth(),
                 )
-                var minutesAgo by remember { mutableIntStateOf(0) }
+                var minutesAgo by remember(ui.startPresets) { mutableIntStateOf(0) }
                 Text("Started (minutes ago)", style = MaterialTheme.typography.bodySmall)
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    listOf(0 to "Now", 5 to "5", 15 to "15", 30 to "30").forEach {
+                    (listOf(0) + ui.startPresets).map { it to if (it == 0) "Now" else "$it" }.forEach {
                             (min, label) ->
                         FilterChip(
                             selected = minutesAgo == min,

@@ -53,6 +53,14 @@ class Prefs(context: Context) {
         get() = sp.getFloat("pay_tax_percent", 0f)
         set(v) = sp.edit { putFloat("pay_tax_percent", v) }
 
+    /** Minutes-ago choices on the Start form, at most 3 so they fit on small screens. */
+    var startPresets: List<Int>
+        get() =
+            sp.getString("start_presets", null)
+                ?.split(',')?.mapNotNull { it.toIntOrNull() }
+                ?: listOf(5, 15, 30)
+        set(v) = sp.edit { putString("start_presets", v.joinToString(",")) }
+
     fun weekTotals(): WeekTotals? =
         sp.getLong("week_done", -1L).takeIf { it >= 0 }?.let { WeekTotals(it, effectiveWeekTarget) }
 

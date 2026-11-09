@@ -42,6 +42,7 @@ data class UiState(
     val running: Entry? = null,
     /** Kimai's first day of the week as sent by the server, blank if it sent none. */
     val firstWeekday: String = "",
+    val startPresets: List<Int> = emptyList(),
 )
 
 class MainViewModel(private val app: Application) : AndroidViewModel(app) {
@@ -60,6 +61,7 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
                 payRateOverride = prefs.payRateOverride,
                 payTaxPercent = prefs.payTaxPercent,
                 firstWeekday = prefs.firstWeekday,
+                startPresets = prefs.startPresets,
             ),
         )
     val ui: StateFlow<UiState> = _ui.asStateFlow()
@@ -291,6 +293,12 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
         prefs.timeMode = mode
         _ui.update { it.copy(timeMode = mode) }
         viewModelScope.launch { repo.refreshSurfaces(prefs.timerState()) }
+    }
+
+    /** Minutes-ago choices for the Start form. Empty goes back to 5, 15, 30. */
+    fun setStartPresets(minutes: List<Int>) {
+        prefs.startPresets = minutes.ifEmpty { listOf(5, 15, 30) }
+        _ui.update { it.copy(startPresets = prefs.startPresets) }
     }
 
     /** Hourly rate typed in the app, or null to use Kimai's per-entry rate instead. */
