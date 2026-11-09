@@ -85,7 +85,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -764,21 +763,17 @@ private fun WeekSummary(
                 Icon(Icons.Default.ChevronRight, contentDescription = "Next week")
             }
         }
+        Spacer(Modifier.height(8.dp))
         val text =
             if (week.targetSeconds > 0) {
                 "${Fmt.hoursMinutes(total)} of ${Fmt.hoursMinutes(week.targetSeconds)}"
             } else {
                 Fmt.hoursMinutes(total)
             }
-        Text(
-            text,
-            style = MaterialTheme.typography.titleMedium,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-        )
+        Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 4.dp))
         if (week.targetSeconds > 0) {
             val fraction = total.toFloat() / week.targetSeconds
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(6.dp))
             LinearProgressIndicator(
                 progress = { fraction.coerceIn(0f, 1f) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
@@ -808,8 +803,7 @@ private fun WeekSummary(
                 payText,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
             )
         }
     }
@@ -843,7 +837,7 @@ private fun TimerCard(
                 ),
         ) {
             Column(
-                modifier = Modifier.padding(20.dp),
+                modifier = Modifier.padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -879,7 +873,7 @@ private fun TimerCard(
     } else {
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(
-                modifier = Modifier.padding(20.dp),
+                modifier = Modifier.padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 LaunchedEffect(ui.entries.isNotEmpty(), ui.projects.isNotEmpty()) { vm.selectLastUsed() }
@@ -893,24 +887,26 @@ private fun TimerCard(
                     )
                 }
                 val canStart = !ui.busy && ui.selectedProject != null && ui.selectedActivity != null
-                Button(
-                    onClick = { vm.start() },
-                    enabled = canStart,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Start")
-                }
-                // One tap starts the timer that many minutes in the past.
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ui.startPresets.forEach { min ->
-                        OutlinedButton(
-                            onClick = { vm.start(min) },
-                            enabled = canStart,
-                            contentPadding = PaddingValues(horizontal = 4.dp),
-                            modifier = Modifier.weight(1f),
-                        ) { Text("${min}m ago", maxLines = 1, softWrap = false) }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = { vm.start() },
+                        enabled = canStart,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Start")
+                    }
+                    // One tap starts the timer that many minutes in the past.
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ui.startPresets.forEach { min ->
+                            OutlinedButton(
+                                onClick = { vm.start(min) },
+                                enabled = canStart,
+                                contentPadding = PaddingValues(horizontal = 4.dp),
+                                modifier = Modifier.weight(1f),
+                            ) { Text("${min}m ago", maxLines = 1, softWrap = false) }
+                        }
                     }
                 }
             }
