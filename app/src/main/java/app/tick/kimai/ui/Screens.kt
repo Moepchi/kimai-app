@@ -763,7 +763,6 @@ private fun WeekSummary(
                 Icon(Icons.Default.ChevronRight, contentDescription = "Next week")
             }
         }
-        Spacer(Modifier.height(8.dp))
         val text =
             if (week.targetSeconds > 0) {
                 "${Fmt.hoursMinutes(total)} of ${Fmt.hoursMinutes(week.targetSeconds)}"
