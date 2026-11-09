@@ -820,13 +820,15 @@ private fun TimerCard(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 var minutesAgo by remember { mutableIntStateOf(0) }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(0 to "Now", 5 to "5 min ago", 15 to "15 min ago", 30 to "30 min ago").forEach {
+                Text("Started (minutes ago)", style = MaterialTheme.typography.bodySmall)
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    listOf(0 to "Now", 5 to "5", 15 to "15", 30 to "30").forEach {
                             (min, label) ->
                         FilterChip(
                             selected = minutesAgo == min,
+                            modifier = Modifier.weight(1f),
                             onClick = { minutesAgo = min },
-                            label = { Text(label) },
+                            label = { Text(label, maxLines = 1, softWrap = false) },
                         )
                     }
                 }
