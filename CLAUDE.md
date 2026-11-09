@@ -8,8 +8,12 @@ Tick: an Android client for [Kimai](https://www.kimai.org) (Kotlin, Jetpack Comp
 
 - Start/stop timers, pick project and activity, add a description
 - Ongoing notification with a live chronometer and a Stop button
-- Recent entries grouped by day: start again, edit (description, start/end date and time), delete
-- Home screen widget (Stop / Start last) and a Quick Settings tile
+- Recent entries grouped by day: start again, edit (description, start/end date and time), delete; edit a running entry without stopping it
+- Add a past entry directly (project, activity, description, start, end)
+- Weekly hours with a target progress bar, per-day totals, week navigation; estimated pay (Kimai rates or an in-app hourly rate, minus optional tax)
+- Home screen widget (Stop / Start last, recent entries, week total; per-widget opacity, theme, visibility settings via the launcher's reconfigure menu) and a Quick Settings tile
+- QR-code sign-in (scan or upload a screenshot of Kimai's login QR code)
+- Offline queue for all timer changes
 - Times follow the system 12/24h setting, overridable in the top-right menu (Time format)
 - Picks up timers started elsewhere (web UI) every 15 minutes in the background, and on app open
 
@@ -50,7 +54,8 @@ app/src/main/java/app/tick/kimai/
   TimerRepository.kt   single place for sync/start/stop; fans out to notification, widget, tile
   MainViewModel.kt     app UI state (StateFlow<UiState>), delegates all timer I/O to TimerRepository
   notify/     ongoing notification + its Stop action BroadcastReceiver
-  widget/     Glance home screen widget
+  widget/     Glance home screen widget + its settings activity (TickWidgetConfigActivity)
+  util/       Fmt (time formatting, 12/24h) and QrImage (decode a QR from a picked image)
   tile/       Quick Settings tile
   work/       15-minute background sync (WorkManager periodic job, registered in TickApp)
   ui/         Compose screens (Screens.kt) and theme
@@ -61,6 +66,8 @@ app/src/main/java/app/tick/kimai/
 `toggle()` is what the widget button and quick tile call: stop if a timer is running, otherwise restart the last entry. It takes `updateTile: Boolean` to avoid recursion when called *from* `TimerTileService` itself.
 
 **Offline queue.** Mutating calls in `TimerRepository` go through `perform()`: replay any queued changes first, then try the call; on a network failure (not an `ApiException`) the change is stored as a `PendingAction` in `Prefs`, the cached `TimerState` is updated optimistically, and `SyncWorker.flushWhenOnline` schedules a replay when connected. `flushQueue()` (also run at the start of every `sync()`) replays in order under a process-wide mutex and drops changes the server rejects. Timers started offline have no id, so a queued `Stop` ends whatever timer is running when replayed. Queued changes are lost on sign out.
+
+**Weeks and the profile cache.** `sync()` re-reads `/users/me` on every full sync (`withWeek = true`) and `saveProfile()` caches timezone, first weekday and contract hours in `Prefs`. `loadWeek(offset)` uses those to compute the week range (starting on Kimai's first weekday, default Monday) and returns a `WeekView`; offset 0 also caches the finished total for the widget. `MainViewModel` keeps `weekOffset`, and `apply()` reloads the browsed week after any change. Week target is the in-app override if set, else the Kimai contract (`Prefs.effectiveWeekTarget`). Estimated pay is computed in `Screens.kt` (`WeekSummary`) from `payRateOverride` or each entry's `rate`.
 
 **Auth header logic lives in `KimaiApi`**: bearer token by default, or `X-AUTH-USER`/`X-AUTH-TOKEN` headers when `legacyUser` (from the optional username field) is non-blank.
 

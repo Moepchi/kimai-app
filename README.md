@@ -14,10 +14,14 @@ Android client for [Kimai](https://www.kimai.org). Kotlin, Jetpack Compose, Mate
 - Recent entries grouped by day: start again, edit (description, start and end date and time), delete
 - Edit a running entry's description and start time without stopping it
 - Add a past entry directly (project, activity, description, start and end) without starting/stopping a timer
-- Home screen widget (Stop / Start last) and a Quick Settings tile
+- Weekly hours with a progress bar toward your target (Kimai contract, or set your own in the top-right menu), per-day totals, and previous weeks via the arrows. The week starts on the day set in your Kimai profile.
+- Estimated weekly pay from Kimai's per-entry rates or your own hourly rate, minus an optional tax percentage (top-right menu, Pay rate & tax)
+- Home screen widget (Stop / Start last, recent entries by day, week total). Long-press it and choose reconfigure to set opacity, light/dark/auto theme, and whether to show the week summary and recent entries
+- Quick Settings tile to start and stop
 - Times follow your system 12/24h setting. Override in the top-right menu, Time format.
 - Picks up timers started elsewhere (web UI) every 15 minutes in the background, and on app open
 - Offline queue: start, stop, restart, add, edit and delete work without a connection and replay once it's back. A banner shows how many changes are waiting.
+- Asks once to exempt Tick from battery optimization so the background sync isn't skipped
 
 ## Sign in
 
