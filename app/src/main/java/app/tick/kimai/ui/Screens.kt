@@ -50,7 +50,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -73,7 +72,6 @@ import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -873,27 +871,26 @@ private fun TimerCard(
                     label = { Text("Description (optional)") },
                     modifier = Modifier.fillMaxWidth(),
                 )
-                var minutesAgo by remember(ui.startPresets) { mutableIntStateOf(0) }
-                Text("Started (minutes ago)", style = MaterialTheme.typography.bodySmall)
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    (listOf(0) + ui.startPresets).map { it to if (it == 0) "Now" else "$it" }.forEach {
-                            (min, label) ->
-                        FilterChip(
-                            selected = minutesAgo == min,
-                            modifier = Modifier.weight(1f),
-                            onClick = { minutesAgo = min },
-                            label = { Text(label, maxLines = 1, softWrap = false) },
-                        )
-                    }
-                }
+                val canStart = !ui.busy && ui.selectedProject != null && ui.selectedActivity != null
                 Button(
-                    onClick = { vm.start(minutesAgo) },
-                    enabled = !ui.busy && ui.selectedProject != null && ui.selectedActivity != null,
+                    onClick = { vm.start() },
+                    enabled = canStart,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Icon(Icons.Default.PlayArrow, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text("Start")
+                }
+                // One tap starts the timer that many minutes in the past.
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ui.startPresets.forEach { min ->
+                        OutlinedButton(
+                            onClick = { vm.start(min) },
+                            enabled = canStart,
+                            contentPadding = PaddingValues(horizontal = 4.dp),
+                            modifier = Modifier.weight(1f),
+                        ) { Text("${min}m ago", maxLines = 1, softWrap = false) }
+                    }
                 }
             }
         }
