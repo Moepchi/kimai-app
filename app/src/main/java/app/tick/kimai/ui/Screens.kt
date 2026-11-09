@@ -794,20 +794,6 @@ private fun TimerCard(
                     "Started ${Fmt.clock(context, t.beginMillis, ui.timeMode)}",
                     style = MaterialTheme.typography.bodyMedium,
                 )
-                ui.running?.let { entry ->
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text("Started earlier:", style = MaterialTheme.typography.bodySmall)
-                        listOf(5, 15, 30).forEach { min ->
-                            OutlinedButton(
-                                onClick = { vm.startedEarlier(entry, min) },
-                                enabled = !ui.busy,
-                            ) { Text("$min min") }
-                        }
-                    }
-                }
                 Button(
                     onClick = { vm.stop() },
                     enabled = !ui.busy,

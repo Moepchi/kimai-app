@@ -254,12 +254,6 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
             apply(repo.delete(entry.id).getOrThrow())
         }
 
-    /** "Oops, I started [minutes] ago": move a running entry's start back. */
-    fun startedEarlier(
-        entry: Entry,
-        minutes: Int,
-    ) = updateEntry(entry, entry.description.orEmpty(), entry.beginMillis - minutes * 60_000L, null)
-
     fun addEntry(
         projectId: Int,
         activityId: Int,
