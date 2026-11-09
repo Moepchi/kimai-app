@@ -382,6 +382,17 @@ private fun HomeScreen(
                                 },
                             )
                             DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        if (ui.hideDescription) "Show description field" else "Hide description field",
+                                    )
+                                },
+                                onClick = {
+                                    menuOpen = false
+                                    vm.setHideDescription(!ui.hideDescription)
+                                },
+                            )
+                            DropdownMenuItem(
                                 text = { Text("Sign out") },
                                 onClick = {
                                     menuOpen = false
@@ -483,6 +494,7 @@ private fun HomeScreen(
         EditEntryDialog(
             entry = entry,
             mode = ui.timeMode,
+            showDescription = !ui.hideDescription,
             onDismiss = { editing = null },
             onSave = { description, beginMillis, endMillis ->
                 vm.updateEntry(entry, description, beginMillis, endMillis)
@@ -865,12 +877,14 @@ private fun TimerCard(
             ) {
                 LaunchedEffect(ui.entries.isNotEmpty(), ui.projects.isNotEmpty()) { vm.selectLastUsed() }
                 ProjectActivityPickers(vm, ui)
-                OutlinedTextField(
-                    value = ui.description,
-                    onValueChange = { vm.setDescription(it) },
-                    label = { Text("Description (optional)") },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                if (!ui.hideDescription) {
+                    OutlinedTextField(
+                        value = ui.description,
+                        onValueChange = { vm.setDescription(it) },
+                        label = { Text("Description (optional)") },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 val canStart = !ui.busy && ui.selectedProject != null && ui.selectedActivity != null
                 Button(
                     onClick = { vm.start() },
@@ -957,6 +971,7 @@ private fun <T> Picker(
 @Composable
 private fun EditEntryDialog(
     entry: Entry,
+    showDescription: Boolean,
     mode: Int,
     onDismiss: () -> Unit,
     onSave: (description: String, beginMillis: Long, endMillis: Long?) -> Unit,
@@ -980,12 +995,14 @@ private fun EditEntryDialog(
         title = { Text("Edit entry") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Description") },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                if (showDescription) {
+                    OutlinedTextField(
+                        value = description,
+                        onValueChange = { description = it },
+                        label = { Text("Description") },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 StartEndFields(
                     begin,
                     end,
@@ -1182,12 +1199,14 @@ private fun AddEntryDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 ProjectActivityPickers(vm, ui)
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Description (optional)") },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                if (!ui.hideDescription) {
+                    OutlinedTextField(
+                        value = description,
+                        onValueChange = { description = it },
+                        label = { Text("Description (optional)") },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 StartEndFields(
                     begin,
                     end,

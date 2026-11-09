@@ -53,6 +53,11 @@ class Prefs(context: Context) {
         get() = sp.getFloat("pay_tax_percent", 0f)
         set(v) = sp.edit { putFloat("pay_tax_percent", v) }
 
+    /** For people who never use descriptions: hide the field in the Start, Add and Edit forms. */
+    var hideDescription: Boolean
+        get() = sp.getBoolean("hide_description", false)
+        set(v) = sp.edit { putBoolean("hide_description", v) }
+
     /** Minutes-ago choices on the Start form, at most 3 so they fit on small screens. */
     var startPresets: List<Int>
         get() =

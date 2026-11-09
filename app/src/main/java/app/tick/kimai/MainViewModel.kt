@@ -43,6 +43,7 @@ data class UiState(
     /** Kimai's first day of the week as sent by the server, blank if it sent none. */
     val firstWeekday: String = "",
     val startPresets: List<Int> = emptyList(),
+    val hideDescription: Boolean = false,
 )
 
 class MainViewModel(private val app: Application) : AndroidViewModel(app) {
@@ -62,6 +63,7 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
                 payTaxPercent = prefs.payTaxPercent,
                 firstWeekday = prefs.firstWeekday,
                 startPresets = prefs.startPresets,
+                hideDescription = prefs.hideDescription,
             ),
         )
     val ui: StateFlow<UiState> = _ui.asStateFlow()
@@ -293,6 +295,11 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
         prefs.timeMode = mode
         _ui.update { it.copy(timeMode = mode) }
         viewModelScope.launch { repo.refreshSurfaces(prefs.timerState()) }
+    }
+
+    fun setHideDescription(hide: Boolean) {
+        prefs.hideDescription = hide
+        _ui.update { it.copy(hideDescription = hide) }
     }
 
     /** Minutes-ago choices for the Start form. Empty goes back to 5, 15, 30. */
