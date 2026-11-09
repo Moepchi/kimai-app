@@ -85,6 +85,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -769,10 +770,15 @@ private fun WeekSummary(
             } else {
                 Fmt.hoursMinutes(total)
             }
-        Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 4.dp))
+        Text(
+            text,
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+        )
         if (week.targetSeconds > 0) {
             val fraction = total.toFloat() / week.targetSeconds
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(8.dp))
             LinearProgressIndicator(
                 progress = { fraction.coerceIn(0f, 1f) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
@@ -802,7 +808,8 @@ private fun WeekSummary(
                 payText,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
             )
         }
     }
