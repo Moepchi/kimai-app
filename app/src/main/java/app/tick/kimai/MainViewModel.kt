@@ -219,7 +219,7 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
 
     // Timer actions
 
-    fun start() =
+    fun start(minutesAgo: Int = 0) =
         launchBusy {
             val s = _ui.value
             val project = s.selectedProject ?: error("Choose a project")
@@ -227,7 +227,14 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
             prefs.lastProjectId = project.id
             prefs.lastActivityId = activity.id
             apply(
-                repo.start(project.id, activity.id, s.description.trim(), project.name, activity.name).getOrThrow(),
+                repo.start(
+                    project.id,
+                    activity.id,
+                    s.description.trim(),
+                    project.name,
+                    activity.name,
+                    minutesAgo,
+                ).getOrThrow(),
             )
             _ui.update { it.copy(description = "") }
         }
@@ -240,11 +247,6 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
     fun restart(entry: Entry) =
         launchBusy {
             apply(repo.restart(entry.id, entry.project.name, entry.activityLabel).getOrThrow())
-        }
-
-    fun restartLast() =
-        launchBusy {
-            apply(repo.restart(_ui.value.timer.lastId).getOrThrow())
         }
 
     fun delete(entry: Entry) =

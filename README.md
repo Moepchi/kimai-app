@@ -9,12 +9,12 @@
 Android client for [Kimai](https://www.kimai.org). Kotlin, Jetpack Compose, Material 3 with dynamic color.
 
 - Start and stop timers, pick project and activity, add a description
-- "Start again" front and center, reusing the last entry's project/activity/description
+- Last project and activity are preselected, so starting is one tap
 - Ongoing notification with a live chronometer and a Stop button
 - Recent entries grouped by day: start again, edit (description, start and end date and time), delete
 - Edit a running entry's description and start time without stopping it
 - Add a past entry directly (project, activity, description, start and end) without starting/stopping a timer
-- "Started earlier" buttons (5, 15, 30 min) on the running timer for when you forgot to start it
+- Forgot to start? Pick "5 / 15 / 30 min ago" before Start, or use "Started earlier" on the running timer
 - Projects and activities are cached, so the pickers work offline
 - Weekly hours with a progress bar toward your target (Kimai contract, or set your own in the top-right menu), per-day totals, and previous weeks via the arrows. The week starts on the day set in your Kimai profile.
 - Estimated weekly pay from Kimai's per-entry rates or your own hourly rate, minus an optional tax percentage (top-right menu, Pay rate & tax)

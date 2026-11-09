@@ -6,7 +6,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneId
-import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.Locale
@@ -33,8 +32,6 @@ object Fmt {
             }
         return odt.toInstant().toEpochMilli()
     }
-
-    fun beginNow(zone: ZoneId): String = ZonedDateTime.now(zone).format(BEGIN)
 
     /** In-app override if set, else the system 12/24h setting. */
     fun is24(

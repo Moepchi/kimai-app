@@ -50,6 +50,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -72,6 +73,7 @@ import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -823,22 +825,7 @@ private fun TimerCard(
                 modifier = Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                if (t.lastLabel.isNotBlank()) {
-                    Button(
-                        onClick = { vm.restartLast() },
-                        enabled = !ui.busy,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Start again: ${t.lastLabel}", maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                    Text(
-                        "or start something new",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                LaunchedEffect(ui.entries.isNotEmpty(), ui.projects.isNotEmpty()) { vm.selectLastUsed() }
                 ProjectActivityPickers(vm, ui)
                 OutlinedTextField(
                     value = ui.description,
@@ -846,8 +833,19 @@ private fun TimerCard(
                     label = { Text("Description (optional)") },
                     modifier = Modifier.fillMaxWidth(),
                 )
+                var minutesAgo by remember { mutableIntStateOf(0) }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(0 to "Now", 5 to "5 min ago", 15 to "15 min ago", 30 to "30 min ago").forEach {
+                            (min, label) ->
+                        FilterChip(
+                            selected = minutesAgo == min,
+                            onClick = { minutesAgo = min },
+                            label = { Text(label) },
+                        )
+                    }
+                }
                 Button(
-                    onClick = { vm.start() },
+                    onClick = { vm.start(minutesAgo) },
                     enabled = !ui.busy && ui.selectedProject != null && ui.selectedActivity != null,
                     modifier = Modifier.fillMaxWidth(),
                 ) {

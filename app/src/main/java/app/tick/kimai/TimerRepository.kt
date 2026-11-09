@@ -223,8 +223,10 @@ class TimerRepository(context: Context) {
         description: String,
         projectName: String = "",
         activityName: String = "",
+        minutesAgo: Int = 0,
     ): Result<SyncResult> {
-        val begin = Fmt.beginNow(userZone())
+        val beganAt = System.currentTimeMillis() - minutesAgo * 60_000L
+        val begin = apiTime(beganAt)
         return perform(
             PendingAction.Start(projectId, activityId, description, begin),
             updateTile = true,
@@ -235,7 +237,7 @@ class TimerRepository(context: Context) {
                     project = projectName,
                     activity = activityName.takeIf { a -> a != projectName }.orEmpty(),
                     description = description,
-                    beginMillis = System.currentTimeMillis(),
+                    beginMillis = beganAt,
                 )
             },
         ) { api().start(projectId, activityId, description, begin) }
