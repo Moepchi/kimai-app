@@ -124,7 +124,9 @@ class TimerRepository(context: Context) {
     /** True for failures to reach the server, as opposed to the server rejecting a request. */
     private fun isOffline(e: Throwable?): Boolean = e is IOException && e !is KimaiApi.ApiException
 
-    private fun nowLocal(): String = Fmt.apiLocal(System.currentTimeMillis(), userZone())
+    private fun apiTime(millis: Long): String = Fmt.apiLocal(millis, userZone())
+
+    private fun nowLocal(): String = apiTime(System.currentTimeMillis())
 
     private fun label(s: TimerState): String =
         listOf(s.project, s.activity).filter {
@@ -247,9 +249,8 @@ class TimerRepository(context: Context) {
         beginMillis: Long,
         endMillis: Long,
     ): Result<SyncResult> {
-        val zone = userZone()
-        val begin = Fmt.apiLocal(beginMillis, zone)
-        val end = Fmt.apiLocal(endMillis, zone)
+        val begin = apiTime(beginMillis)
+        val end = apiTime(endMillis)
         return perform(PendingAction.Create(projectId, activityId, description, begin, end), updateTile = true) {
             api().start(projectId, activityId, description, begin, end)
         }
@@ -325,9 +326,8 @@ class TimerRepository(context: Context) {
         beginMillis: Long,
         endMillis: Long?,
     ): Result<SyncResult> {
-        val zone = userZone()
-        val begin = Fmt.apiLocal(beginMillis, zone)
-        val end = endMillis?.let { Fmt.apiLocal(it, zone) }
+        val begin = apiTime(beginMillis)
+        val end = endMillis?.let { apiTime(it) }
         return perform(PendingAction.Update(entryId, description, begin, end), updateTile = true) {
             api().updateEntry(entryId, description, begin, end)
         }

@@ -87,23 +87,23 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
 
     private fun apply(r: SyncResult) {
         val offset = _ui.value.weekOffset
-        _ui.update { it.copy(firstWeekday = prefs.firstWeekday) }
         _ui.update {
-            if (offset == 0) {
+            val updated =
                 it.copy(
+                    firstWeekday = prefs.firstWeekday,
                     timer = r.state,
                     running = if (r.entries != null) r.running else it.running,
+                    pending = r.pending,
+                )
+            // A sync only brings the current week's list and totals; other weeks reload below.
+            if (offset == 0) {
+                updated.copy(
                     entries = r.entries ?: it.entries,
                     week = r.week ?: it.week,
                     weekStart = r.weekStart ?: it.weekStart,
-                    pending = r.pending,
                 )
             } else {
-                it.copy(
-                    timer = r.state,
-                    running = if (r.entries != null) r.running else it.running,
-                    pending = r.pending,
-                )
+                updated
             }
         }
         if (offset != 0) viewModelScope.launch { runCatching { loadWeekView(offset) } }
@@ -193,8 +193,7 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
         }
         val project = s.projects.firstOrNull { it.id == prefs.lastProjectId } ?: return
         if (project.id == s.selectedProject?.id && s.selectedActivity?.id == prefs.lastActivityId) return
-        _ui.update { it.copy(selectedProject = project, activities = emptyList(), selectedActivity = null) }
-        launchBusy { loadActivities(project) }
+        selectProject(project)
     }
 
     fun selectActivity(a: Activity) = _ui.update { it.copy(selectedActivity = a) }
