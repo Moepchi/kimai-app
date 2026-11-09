@@ -3,6 +3,9 @@ package app.tick.kimai.data
 import android.content.Context
 import androidx.core.content.edit
 import app.tick.kimai.util.TimeMode
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 
 class Prefs(context: Context) {
     private val sp = context.applicationContext.getSharedPreferences("tick", Context.MODE_PRIVATE)
@@ -65,6 +68,31 @@ class Prefs(context: Context) {
                 RecentEntry.encodeList(list),
             )
         }
+
+    /** Projects and per-project activities from the last successful fetch, so the pickers work offline. */
+    fun projects(): List<Project> = decodeCache("projects", Project.serializer())
+
+    fun saveProjects(list: List<Project>) = encodeCache("projects", list, Project.serializer())
+
+    fun activities(projectId: Int): List<Activity> = decodeCache("activities_$projectId", Activity.serializer())
+
+    fun saveActivities(
+        projectId: Int,
+        list: List<Activity>,
+    ) = encodeCache("activities_$projectId", list, Activity.serializer())
+
+    private fun <T> decodeCache(
+        key: String,
+        item: KSerializer<T>,
+    ): List<T> =
+        runCatching { Json.decodeFromString(ListSerializer(item), sp.getString(key, "").orEmpty()) }
+            .getOrDefault(emptyList())
+
+    private fun <T> encodeCache(
+        key: String,
+        list: List<T>,
+        item: KSerializer<T>,
+    ) = sp.edit { putString(key, Json.encodeToString(ListSerializer(item), list)) }
 
     fun pending(): List<PendingAction> = PendingAction.decodeList(sp.getString("pending", "").orEmpty())
 

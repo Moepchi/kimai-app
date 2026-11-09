@@ -163,16 +163,33 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
     fun showWeek(offset: Int) = launchBusy { loadWeekView(offset.coerceAtMost(0)) }
 
     private suspend fun loadProjects() {
-        val api = repo.apiOrNull() ?: return
-        val projects = api.projects()
+        val projects = fetchOrCache({ it.projects().also(prefs::saveProjects) }, prefs.projects()) ?: return
         val selected = projects.firstOrNull { it.id == prefs.lastProjectId } ?: projects.firstOrNull()
         _ui.update { it.copy(projects = projects, selectedProject = selected) }
         if (selected != null) loadActivities(selected)
     }
 
+    /** Fetch from Kimai, or use [cached] when offline. Null means nothing to show. */
+    private suspend fun <T> fetchOrCache(
+        fetch: suspend (KimaiApi) -> List<T>,
+        cached: List<T>,
+    ): List<T>? {
+        val api = repo.apiOrNull() ?: return null
+        return try {
+            fetch(api)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: java.io.IOException) {
+            cached.ifEmpty { throw e }
+        }
+    }
+
     private suspend fun loadActivities(project: Project) {
-        val api = repo.apiOrNull() ?: return
-        val activities = api.activities(project.id)
+        val activities =
+            fetchOrCache(
+                { it.activities(project.id).also { list -> prefs.saveActivities(project.id, list) } },
+                prefs.activities(project.id),
+            ) ?: return
         val selected = activities.firstOrNull { it.id == prefs.lastActivityId } ?: activities.firstOrNull()
         _ui.update { it.copy(activities = activities, selectedActivity = selected) }
     }
@@ -234,6 +251,12 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
         launchBusy {
             apply(repo.delete(entry.id).getOrThrow())
         }
+
+    /** "Oops, I started [minutes] ago": move a running entry's start back. */
+    fun startedEarlier(
+        entry: Entry,
+        minutes: Int,
+    ) = updateEntry(entry, entry.description.orEmpty(), entry.beginMillis - minutes * 60_000L, null)
 
     fun addEntry(
         projectId: Int,
